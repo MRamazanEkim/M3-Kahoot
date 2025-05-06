@@ -582,6 +582,44 @@
         #results-screen.active {
             display: block;
         }
+
+        .waiting-card {
+            background: rgba(255,255,255,0.90);
+            border-radius: 32px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.13);
+            padding: 90px 70px 70px 70px;
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .screen.active#waiting-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        #waiting-screen h1 {
+            font-size: 5.2rem;
+            color: var(--primary-color);
+            font-weight: 900;
+            margin-bottom: 36px;
+            letter-spacing: 1px;
+        }
+        #waiting-screen .subtitle {
+            font-size: 2.8rem;
+            color: #444;
+            margin-bottom: 44px;
+            font-weight: 500;
+        }
+        #player-display {
+            font-size: 2.4rem !important;
+            color: var(--secondary-color);
+            font-weight: 700;
+            margin-bottom: 0;
+        }
     </style>
 </head>
 <body>
@@ -658,9 +696,11 @@
     
     <!-- Waiting Screen -->
     <div class="screen" id="waiting-screen">
-        <h1>Get Ready!</h1>
-        <p class="subtitle">Waiting for the quiz to start...</p>
-        <p id="player-display" style="text-align: center; font-size: 1.3rem; margin-bottom: 30px;"></p>
+        <div class="waiting-card">
+            <h1>Get Ready!</h1>
+            <p class="subtitle">Waiting for the quiz to start...</p>
+            <p id="player-display"></p>
+        </div>
     </div>
     
     <!-- Results Screen -->
@@ -726,6 +766,41 @@
                     <option value="large">Large</option>
                 </select>
             </div>
+
+            <div class="input-group">
+                <label for="game-text-color">Text Color</label>
+                <input type="color" id="game-text-color" value="#333333">
+            </div>
+            <div class="input-group">
+                <label for="game-font-family">Font</label>
+                <select id="game-font-family">
+                    <option value="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">Default</option>
+                    <option value="Arial, Helvetica, sans-serif">Arial</option>
+                    <option value="'Courier New', Courier, monospace">Courier New</option>
+                    <option value="'Times New Roman', Times, serif">Times New Roman</option>
+                    <option value="'Comic Sans MS', cursive, sans-serif">Comic Sans MS</option>
+                    <option value="'Roboto', sans-serif">Roboto</option>
+                    <option value="'Montserrat', sans-serif">Montserrat</option>
+                    <option value="'Open Sans', sans-serif">Open Sans</option>
+                    <option value="'Lato', sans-serif">Lato</option>
+                    <option value="'Oswald', sans-serif">Oswald</option>
+                    <option value="'Raleway', sans-serif">Raleway</option>
+                    <option value="'Merriweather', serif">Merriweather</option>
+                    <option value="'Fira Mono', monospace">Fira Mono</option>
+                    <option value="'Dancing Script', cursive">Dancing Script</option>
+                    <option value="'Bebas Neue', cursive">Bebas Neue</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="game-font-size">Font Size (px)</label>
+                <input type="number" id="game-font-size" min="12" max="72" value="28" style="width:100px;">
+            </div>
+
+            <div class="input-group">
+                <label for="background-image-input">Background Image</label>
+                <input type="file" id="background-image-input" accept="image/*">
+                <button id="remove-bg-btn" type="button" class="secondary" style="margin-top:10px;display:none;">Remove Background</button>
+            </div>
             
             <div class="input-group">
                 <label for="question-text-input">Question</label>
@@ -749,14 +824,10 @@
                     <option value="3">Answer 4</option>
                 </select>
             </div>
-            
-            <div class="input-group">
-                <label for="background-image-input">Background Image</label>
-                <input type="file" id="background-image-input" accept="image/*">
-                <button id="remove-bg-btn" type="button" class="secondary" style="margin-top:10px;display:none;">Remove Background</button>
-            </div>
-            
+
             <button id="add-question-btn" class="accent">Add Question</button>
+            
+            
             
             <h2 style="margin-top: 40px; margin-bottom: 20px;">Quiz Questions</h2>
             <div id="questions-list" class="questions-list">
@@ -914,7 +985,7 @@
             // Simulate waiting for other players
             setTimeout(() => {
                 startQuiz();
-            }, 2000);
+            }, 3000);
         }
         
         // Function to shuffle array (Fisher-Yates algorithm)
@@ -975,10 +1046,12 @@
                 btn.style.backgroundColor = 'transparent';
                 btn.style.color = '#333';
                 btn.style.pointerEvents = 'auto';
+                span.style.fontFamily = gameFontFamilySelect.value;
             });
             
             showScreen('game');
             startTimer();
+            applyGameTextStyles();
         }
         
         function startTimer() {
@@ -1317,6 +1390,59 @@
             localStorage.removeItem('quizBgImage');
             removeBgBtn.style.display = 'none';
             backgroundImageInput.value = '';
+        });
+        
+        //  text color and font logic
+        const gameTextColorInput = document.getElementById('game-text-color');
+        const gameFontFamilySelect = document.getElementById('game-font-family');
+        const gameFontSizeInput = document.getElementById('game-font-size');
+        const questionTextEl = document.getElementById('question-text');
+        const answerBtnsEls = document.querySelectorAll('.answer-btn');
+
+        // Load saved preferences
+        const savedTextColor = localStorage.getItem('quizGameTextColor');
+        const savedFontFamily = localStorage.getItem('quizGameFontFamily');
+        const savedFontSize = localStorage.getItem('quizGameFontSize');
+        if (savedTextColor) {
+            gameTextColorInput.value = savedTextColor;
+        }
+        if (savedFontFamily) {
+            gameFontFamilySelect.value = savedFontFamily;
+        }
+        if (savedFontSize) {
+            gameFontSizeInput.value = savedFontSize;
+        }
+        function applyGameTextStyles() {
+            const color = gameTextColorInput.value;
+            const font = gameFontFamilySelect.value;
+            const fontSize = gameFontSizeInput.value + 'px';
+            questionTextEl.style.color = color;
+            questionTextEl.style.fontFamily = font;
+            questionTextEl.style.fontSize = fontSize;
+            answerBtnsEls.forEach(btn => {
+                btn.style.color = color;
+                btn.style.fontFamily = font;
+                btn.style.fontSize = fontSize;
+                if (btn.firstElementChild) {
+                    btn.firstElementChild.style.fontFamily = font;
+                    btn.firstElementChild.style.fontSize = fontSize;
+                }
+            });
+        }
+        // Apply on load
+        applyGameTextStyles();
+        // Update and save on change
+        gameTextColorInput.addEventListener('input', () => {
+            localStorage.setItem('quizGameTextColor', gameTextColorInput.value);
+            applyGameTextStyles();
+        });
+        gameFontFamilySelect.addEventListener('change', () => {
+            localStorage.setItem('quizGameFontFamily', gameFontFamilySelect.value);
+            applyGameTextStyles();
+        });
+        gameFontSizeInput.addEventListener('input', () => {
+            localStorage.setItem('quizGameFontSize', gameFontSizeInput.value);
+            applyGameTextStyles();
         });
         
         // Initialize the app
