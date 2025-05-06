@@ -60,7 +60,7 @@
             left: 0;
             width: 100%;
             height: 100vh;
-            background-color: var(--light-color);
+            background-color: transparent;
             z-index: 100;
             overflow-y: auto;
         }
@@ -454,83 +454,51 @@
         }
 
         .scoreboard {
-            margin-top: 20px;
-            background: white;
-            border-radius: 15px;
-            padding: 15px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 90%;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-            position: relative;
-            z-index: 1;
-        }
-
-        .scoreboard h2 {
-            color: var(--primary-color);
-            text-align: center;
-            margin-bottom: 15px;
-            font-size: 1.8rem;
-            position: relative;
-            z-index: 2;
-        }
-
-        .scoreboard-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            position: relative;
-            z-index: 2;
-        }
-
-        .scoreboard-item {
-            display: grid;
-            grid-template-columns: 60px 1fr 100px 100px;
-            align-items: center;
-            padding: 8px 15px;
+            margin: 40px auto 0 auto;
             background: #fff;
-            border-radius: 10px;
-            font-size: 1rem;
-            height: 40px;
-            min-height: 40px;
-            position: relative;
-            z-index: 2;
-            color: #333;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            max-width: 900px;
+            width: 99vw;
+            padding: 28px 28px 24px 28px;
+            text-align: center;
         }
 
-        .scoreboard-item.current-player {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .rank {
-            font-weight: bold;
+        .scoreboard-title {
+            font-size: 2.8rem;
             color: var(--primary-color);
-            font-size: 0.9rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+            letter-spacing: 1px;
         }
 
-        .current-player .rank {
-            color: white;
+        .scoreboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
         }
 
-        .name {
-            font-weight: 500;
-            font-size: 0.9rem;
+        .scoreboard-table th, .scoreboard-table td {
+            padding: 10px 8px;
+            font-size: 2rem;
+            border-bottom: 2px solid #eee;
         }
 
-        .score, .time {
-            text-align: right;
-            font-size: 0.9rem;
+        .scoreboard-table th {
+            color: var(--primary-color);
+            font-weight: 800;
+            background: #f8f9fa;
+            font-size: 2.2rem;
         }
 
-        #play-again-btn {
-            position: fixed;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 300px;
-            z-index: 102;
+        .scoreboard-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .scoreboard-empty {
+            color: #aaa;
+            font-size: 1.5rem;
+            margin: 18px 0 0 0;
         }
 
         .popup {
@@ -605,10 +573,10 @@
             left: 0;
             width: 100%;
             height: 100vh;
-            background-color: var(--light-color);
+            background-color: transparent;
             z-index: 100;
             overflow-y: auto;
-            padding: 20px;
+            padding: 40px 20px;
         }
 
         #results-screen.active {
@@ -698,10 +666,21 @@
     <!-- Results Screen -->
     <div class="screen" id="results-screen">
         <div class="scoreboard">
-            <h2>Top Players</h2>
-            <div class="scoreboard-list">
-                <!-- Scoreboard items will be added here dynamically -->
-            </div>
+            <div class="scoreboard-title">Top Players</div>
+            <table class="scoreboard-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Name</th>
+                        <th>Score</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody class="scoreboard-body">
+                    <!-- Scoreboard rows will be added here dynamically -->
+                </tbody>
+            </table>
+            <div class="scoreboard-empty" style="display:none;">No scores yet</div>
         </div>
         <button id="play-again-btn" style="margin: 40px auto;">Play Again</button>
     </div>
@@ -769,6 +748,12 @@
                     <option value="2">Answer 3</option>
                     <option value="3">Answer 4</option>
                 </select>
+            </div>
+            
+            <div class="input-group">
+                <label for="background-image-input">Background Image</label>
+                <input type="file" id="background-image-input" accept="image/*">
+                <button id="remove-bg-btn" type="button" class="secondary" style="margin-top:10px;display:none;">Remove Background</button>
             </div>
             
             <button id="add-question-btn" class="accent">Add Question</button>
@@ -1068,10 +1053,12 @@
                 name: playerName,
                 score: score,
                 time: totalTime,
-                date: new Date().toLocaleDateString()
+                date: new Date().toLocaleDateString(),
+                totalQuestions: questions.length
             };
             
             playerScores.push(currentPlayerScore);
+            console.log('endQuiz: playerScores after push:', playerScores);
             
             // Sort scores: first by score (descending), then by time (ascending)
             playerScores.sort((a, b) => {
@@ -1109,7 +1096,7 @@
                 score.time === playerScore.time
             ) + 1;
             
-            currentScore.textContent = `${playerScore.score}/${questions.length}`;
+            currentScore.textContent = `${playerScore.score}`;
             currentTime.textContent = formatTime(playerScore.time);
             currentRank.textContent = `#${rank}`;
             
@@ -1117,22 +1104,33 @@
         }
         
         function updateScoreboard() {
-            const scoreboardHTML = playerScores.slice(0, 10).map((score, index) => `
-                <div class="scoreboard-item">
-                    <span class="rank">#${index + 1}</span>
-                    <span class="name">${score.name}</span>
-                    <span class="score">${score.score}/${questions.length}</span>
-                    <span class="time">${formatTime(score.time)}</span>
-                </div>
-            `).join('');
-            // DEBUG: log playerScores and HTML
-            console.log('playerScores:', playerScores);
-            console.log('scoreboardHTML:', scoreboardHTML);
-            // Update scoreboard content
-            const scoreboardList = document.querySelector('.scoreboard-list');
-            if (scoreboardList) {
-                scoreboardList.innerHTML = scoreboardHTML;
+            const scoreboardBody = document.querySelector('.scoreboard-body');
+            const scoreboardEmpty = document.querySelector('.scoreboard-empty');
+            if (!scoreboardBody || !scoreboardEmpty) return;
+
+            // Clear existing content
+            scoreboardBody.innerHTML = '';
+
+            // Get top 10 scores
+            const topScores = playerScores.slice(0, 10);
+
+            if (topScores.length === 0) {
+                scoreboardEmpty.style.display = 'block';
+                return;
+            } else {
+                scoreboardEmpty.style.display = 'none';
             }
+
+            topScores.forEach((score, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>#${index + 1}</td>
+                    <td>${score.name}</td>
+                    <td>${score.score}</td>
+                    <td>${formatTime(score.time)}</td>
+                `;
+                scoreboardBody.appendChild(tr);
+            });
         }
 
         function formatTime(seconds) {
@@ -1283,6 +1281,42 @@
         // Add event listener for close popup button
         document.getElementById('close-popup-btn').addEventListener('click', () => {
             document.getElementById('current-player-popup').classList.remove('active');
+        });
+        
+        // Background image logic
+        const backgroundImageInput = document.getElementById('background-image-input');
+        const removeBgBtn = document.getElementById('remove-bg-btn');
+        const body = document.body;
+
+        // Load background image from localStorage on startup
+        const savedBg = localStorage.getItem('quizBgImage');
+        if (savedBg) {
+            body.style.backgroundImage = `url('${savedBg}')`;
+            body.style.backgroundSize = 'cover';
+            body.style.backgroundPosition = 'center';
+            removeBgBtn.style.display = 'inline-block';
+        }
+
+        backgroundImageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const dataUrl = evt.target.result;
+                body.style.backgroundImage = `url('${dataUrl}')`;
+                body.style.backgroundSize = 'cover';
+                body.style.backgroundPosition = 'center';
+                localStorage.setItem('quizBgImage', dataUrl);
+                removeBgBtn.style.display = 'inline-block';
+            };
+            reader.readAsDataURL(file);
+        });
+
+        removeBgBtn.addEventListener('click', function() {
+            body.style.backgroundImage = '';
+            localStorage.removeItem('quizBgImage');
+            removeBgBtn.style.display = 'none';
+            backgroundImageInput.value = '';
         });
         
         // Initialize the app
