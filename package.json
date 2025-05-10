@@ -1,0 +1,23 @@
+{
+  "name": "m3-kahoot",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+  "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MRamazanEkim/M3-Kahoot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MRamazanEkim/M3-Kahoot/issues"
+  },
+  "homepage": "https://github.com/MRamazanEkim/M3-Kahoot#readme",
+  "description": "",
+  "devDependencies": {
+    "electron": "^36.2.0"
+  }
+}

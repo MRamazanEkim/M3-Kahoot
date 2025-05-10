@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuizMaster - Kahoot Alternatifi</title>
+    <title>M3 Kahoot</title>
     <!-- Add Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Montserrat:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Oswald:wght@400;700&family=Raleway:wght@400;700&family=Merriweather:wght@400;700&family=Fira+Mono&family=Dancing+Script:wght@400;700&family=Bebas+Neue&display=swap" rel="stylesheet">
     <style>
@@ -958,7 +958,59 @@
         let timePerQuestion = 20; // Default time per question in seconds
         let totalTime = 0;
         let gameStartTime;
-        let playerScores = JSON.parse(localStorage.getItem('playerScores')) || [];
+        let playerScores = [];
+        
+        // Load saved data when the app starts
+        function loadSavedData() {
+            try {
+                // Load saved questions
+                const savedQuestions = localStorage.getItem('quizQuestions');
+                if (savedQuestions) {
+                    questions = JSON.parse(savedQuestions);
+                    console.log('Loaded questions:', questions);
+                } else {
+                    // Add default questions if none exist
+                    questions = [
+                        {
+                            question: "What's the capital of France?",
+                            answers: ["Berlin", "Paris", "London", "Madrid"],
+                            correctAnswer: 1
+                        },
+                        {
+                            question: "Which planet is known as the Red Planet?",
+                            answers: ["Earth", "Venus", "Mars", "Jupiter"],
+                            correctAnswer: 2
+                        },
+                        {
+                            question: "Who painted the Mona Lisa?",
+                            answers: ["Vincent van Gogh", "Leonardo da Vinci", "Pablo Picasso", "Michelangelo"],
+                            correctAnswer: 1
+                        }
+                    ];
+                    localStorage.setItem('quizQuestions', JSON.stringify(questions));
+                    console.log('Created default questions:', questions);
+                }
+
+                // Load saved scores
+                const savedScores = localStorage.getItem('playerScores');
+                if (savedScores) {
+                    playerScores = JSON.parse(savedScores);
+                    console.log('Loaded scores:', playerScores);
+                }
+
+                // Render the questions list and update scoreboard
+                renderQuestionsList();
+                updateScoreboard();
+            } catch (error) {
+                console.error('Error loading saved data:', error);
+            }
+        }
+
+        // Call loadSavedData when the window loads
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSavedData();
+            resizeApp();
+        });
         
         // DOM Elements
         const registrationScreen = document.getElementById('registration-screen');
@@ -1255,9 +1307,8 @@
         }
         
         function endQuiz() {
-            totalTime = Math.floor((Date.now() - gameStartTime) / 1000); // Convert to seconds
+            totalTime = Math.floor((Date.now() - gameStartTime) / 1000);
             
-            // Add current player's score
             const currentPlayerScore = {
                 name: playerName,
                 score: score,
@@ -1268,7 +1319,6 @@
             
             playerScores.push(currentPlayerScore);
             
-            // Sort scores: first by score (descending), then by time (ascending)
             playerScores.sort((a, b) => {
                 if (b.score !== a.score) {
                     return b.score - a.score;
@@ -1276,15 +1326,16 @@
                 return a.time - b.time;
             });
             
-            // Save all scores to localStorage
-            localStorage.setItem('playerScores', JSON.stringify(playerScores));
+            // Save scores to storage
+            try {
+                localStorage.setItem('playerScores', JSON.stringify(playerScores));
+                console.log('Saved scores:', playerScores);
+            } catch (error) {
+                console.error('Error saving scores:', error);
+            }
             
-            // Update scoreboard (showing only top 10)
             updateScoreboard();
-            
-            // Show current player results popup
             showCurrentPlayerResults(currentPlayerScore);
-            
             showScreen('results');
 
             // Add countdown to return to registration screen
@@ -1414,6 +1465,14 @@
                 correctAnswer
             });
             
+            // Save questions to storage
+            try {
+                localStorage.setItem('quizQuestions', JSON.stringify(questions));
+                console.log('Saved questions:', questions);
+            } catch (error) {
+                console.error('Error saving questions:', error);
+            }
+            
             // Clear the inputs for next question
             questionTextInput.value = '';
             answerInputs.forEach(input => {
@@ -1456,6 +1515,7 @@
         
         function removeQuestion(index) {
             questions.splice(index, 1);
+            localStorage.setItem('quizQuestions', JSON.stringify(questions));
             renderQuestionsList();
         }
         
@@ -1657,11 +1717,8 @@
         // Add clear scores functionality
         document.getElementById('clear-scores-btn').addEventListener('click', () => {
             if (confirm('Tüm puan tablosu kayıtlarını temizlemek istediğinize emin misiniz? Bu işlem geri alınamaz.')) {
-                // Clear scores from localStorage
-                localStorage.removeItem('playerScores');
-                // Reset playerScores array
                 playerScores = [];
-                // Update the scoreboard display
+                localStorage.setItem('playerScores', JSON.stringify(playerScores));
                 updateScoreboard();
                 alert('Tüm puan tablosu kayıtları temizlendi.');
             }
